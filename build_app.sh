@@ -49,42 +49,50 @@ pyinstaller --noconfirm \
     --windowed \
     --icon="assets/icon.icns" \
     --osx-bundle-identifier="com.shubaoyang.musicplayer" \
-    --hidden-import=PyQt5.QtCore \
-    --hidden-import=PyQt5.QtGui \
-    --hidden-import=PyQt5.QtWidgets \
+    --hidden-import=PySide6.QtCore \
+    --hidden-import=PySide6.QtGui \
+    --hidden-import=PySide6.QtWidgets \
     --hidden-import=pygame \
     --hidden-import=mutagen \
     --hidden-import=mutagen.mp3 \
     --hidden-import=mutagen.flac \
     --hidden-import=mutagen.oggvorbis \
-    --exclude-module=PyQt5.QtBluetooth \
-    --exclude-module=PyQt5.QtDBus \
-    --exclude-module=PyQt5.QtDesigner \
-    --exclude-module=PyQt5.QtHelp \
-    --exclude-module=PyQt5.QtLocation \
-    --exclude-module=PyQt5.QtMultimedia \
-    --exclude-module=PyQt5.QtMultimediaWidgets \
-    --exclude-module=PyQt5.QtNetwork \
-    --exclude-module=PyQt5.QtNetworkAuth \
-    --exclude-module=PyQt5.QtNfc \
-    --exclude-module=PyQt5.QtOpenGL \
-    --exclude-module=PyQt5.QtPositioning \
-    --exclude-module=PyQt5.QtPrintSupport \
-    --exclude-module=PyQt5.QtQml \
-    --exclude-module=PyQt5.QtQuick \
-    --exclude-module=PyQt5.QtQuickWidgets \
-    --exclude-module=PyQt5.QtSensors \
-    --exclude-module=PyQt5.QtSerialPort \
-    --exclude-module=PyQt5.QtSql \
-    --exclude-module=PyQt5.QtSvg \
-    --exclude-module=PyQt5.QtTest \
-    --exclude-module=PyQt5.QtWebChannel \
-    --exclude-module=PyQt5.QtWebEngine \
-    --exclude-module=PyQt5.QtWebEngineCore \
-    --exclude-module=PyQt5.QtWebEngineWidgets \
-    --exclude-module=PyQt5.QtWebSockets \
-    --exclude-module=PyQt5.QtXml \
-    --exclude-module=PyQt5.QtXmlPatterns \
+    --hidden-import=music_player \
+    --hidden-import=music_player.models \
+    --hidden-import=music_player.views \
+    --hidden-import=music_player.controllers \
+    --hidden-import=music_player.utils \
+    --collect-all=music_player \
+    --exclude-module=PySide6.QtBluetooth \
+    --exclude-module=PySide6.QtDBus \
+    --exclude-module=PySide6.QtDesigner \
+    --exclude-module=PySide6.QtHelp \
+    --exclude-module=PySide6.QtLocation \
+    --exclude-module=PySide6.QtMultimedia \
+    --exclude-module=PySide6.QtMultimediaWidgets \
+    --exclude-module=PySide6.QtNetwork \
+    --exclude-module=PySide6.QtNetworkAuth \
+    --exclude-module=PySide6.QtNfc \
+    --exclude-module=PySide6.QtOpenGL \
+    --exclude-module=PySide6.QtPositioning \
+    --exclude-module=PySide6.QtPrintSupport \
+    --exclude-module=PySide6.QtQml \
+    --exclude-module=PySide6.QtQuick \
+    --exclude-module=PySide6.QtQuickWidgets \
+    --exclude-module=PySide6.QtSensors \
+    --exclude-module=PySide6.QtSerialPort \
+    --exclude-module=PySide6.QtSql \
+    --exclude-module=PySide6.QtSvg \
+    --exclude-module=PySide6.QtTest \
+    --exclude-module=PySide6.QtWebChannel \
+    --exclude-module=PySide6.QtWebEngine \
+    --exclude-module=PySide6.QtWebEngineCore \
+    --exclude-module=PySide6.QtWebEngineWidgets \
+    --exclude-module=PySide6.QtWebSockets \
+    --exclude-module=PySide6.QtXml \
+    --exclude-module=PySide6.QtXmlPatterns \
+    --exclude-module=PyQt5 \
+    --exclude-module=PyQt6 \
     --exclude-module=tkinter \
     --exclude-module=matplotlib \
     --exclude-module=numpy \
@@ -127,7 +135,7 @@ echo ""
 
 # 5. 创建 DMG 安装包
 echo "📀 步骤 5/6: 创建 DMG 安装包..."
-DMG_NAME="音乐播放器-v2.0.0.dmg"
+DMG_NAME="音乐播放器-v0.2.dmg"
 rm -f "$DMG_NAME"
 
 # 创建临时目录用于 DMG

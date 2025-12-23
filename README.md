@@ -1,11 +1,12 @@
 # 🎵 本地音乐播放器
 
-一个使用 Python + PySide6 + Pygame 开发的精美桌面音乐播放器。
+一个使用 Python + PySide6 + Pygame 开发的桌面音乐播放器。
+![alt text](./assets/image.png)
 
 ## ✨ 特性
 
 ### 基础功能
-- 🎨 精美的深色主题界面
+- 🎨 深色主题界面
 - 🎵 支持 MP3、WAV、OGG、FLAC 等多种音频格式
 - 📁 支持添加单个文件或整个文件夹
 - 📝 播放列表管理
@@ -15,7 +16,7 @@
 - 🖱️ 双击播放列表项目即可播放
 - 🔄 自动播放下一首
 
-### v2.0 新功能
+### v0.2 新功能
 - 🎯 **可拖动进度条** - 快速跳转到歌曲任意位置
 - 🔀 **多种播放模式** - 顺序播放、列表循环、随机播放、单曲循环
 - 🔍 **搜索过滤** - 快速搜索歌曲、艺术家、专辑
@@ -28,13 +29,6 @@
 - 🏗️ **模块化架构** - MVC 架构，易于维护和扩展
 
 ## 🚀 安装
-
-### 快速安装（推荐）
-
-```bash
-# 运行自动安装脚本
-./install_deps.sh
-```
 
 ### 方式 1: 手动安装
 
@@ -60,7 +54,7 @@ python3 music_player_app.py
 
 ### 方式 2: 使用打包的应用
 
-1. 下载 `音乐播放器-v2.0.0.dmg`
+1. 下载 `music-player-vx.x.dmg`
 2. 双击打开 DMG 文件
 3. 拖动应用到 Applications 文件夹
 4. 在启动台或 Applications 文件夹中打开应用
@@ -145,7 +139,7 @@ python3 music_player_app.py
 - Mutagen（元数据读取）
 - SDL2（音频后端）
 
-> **注意**: 本项目已从 PyQt5 迁移到 PySide6。PySide6 是 Qt 官方支持的 Python 绑定，提供更好的许可证（LGPL）和更活跃的社区支持。详见 [MIGRATION_TO_PYSIDE6.md](MIGRATION_TO_PYSIDE6.md)
+> **注意**: PySide6 是 Qt 官方支持的 Python 绑定，提供更好的许可证（LGPL）和更活跃的社区支持。详见 [MIGRATION_TO_PYSIDE6.md](MIGRATION_TO_PYSIDE6.md)
 
 ## 🏗️ 项目结构
 
@@ -168,10 +162,6 @@ music_player/
 │   └── logger.py
 └── main.py             # 应用入口
 ```
-
-## 📦 发布到 Homebrew
-
-详细步骤请查看 [INSTALL.md](INSTALL.md)
 
 ## 📄 许可
 
@@ -220,31 +210,11 @@ MIT License
         └── tasks.md         # 任务列表
 ```
 
-## 🎯 快速链接
-
-- 📖 [快速开始指南](QUICKSTART.md) - 5分钟上手
-- 📖 [更新日志](CHANGELOG.md) - 版本历史
-- 📖 [安装说明](INSTALL.md) - 详细安装步骤
-
-## 🧪 运行测试
-
-```bash
-# 运行组件测试
-python3 test_components.py
-
-# 运行 pytest（如果有更多测试）
-pytest
-
-# 检查代码风格
-flake8 music_player/
-```
 
 ## 🐛 问题反馈
 
 如果遇到问题：
 1. 查看日志文件：`~/.config/music-player/music_player.log`
-2. 运行测试：`python3 test_components.py`
-3. 查看文档：[QUICKSTART.md](QUICKSTART.md)
 
 ---
 
