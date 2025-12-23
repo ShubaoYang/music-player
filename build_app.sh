@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# 使用 PyInstaller 构建 macOS .app 应用
+# 使用 PyInstaller 构建新版音乐播放器 macOS .app 应用
 
 set -e
 
-echo "🎵 音乐播放器 - PyInstaller 打包流程"
+echo "🎵 音乐播放器 v2.0 - PyInstaller 打包流程"
 echo "================================"
 echo ""
 
@@ -20,15 +20,8 @@ if ! python3 -c "import PyInstaller" 2>/dev/null; then
     pip3 install pyinstaller
 fi
 
-if ! python3 -c "import PyQt5" 2>/dev/null; then
-    echo "安装 PyQt5..."
-    pip3 install PyQt5
-fi
-
-if ! python3 -c "import pygame" 2>/dev/null; then
-    echo "安装 pygame..."
-    pip3 install pygame
-fi
+# 安装所有依赖
+pip3 install -r requirements.txt
 
 echo "✓ 依赖检查完成"
 echo ""
@@ -60,6 +53,10 @@ pyinstaller --noconfirm \
     --hidden-import=PyQt5.QtGui \
     --hidden-import=PyQt5.QtWidgets \
     --hidden-import=pygame \
+    --hidden-import=mutagen \
+    --hidden-import=mutagen.mp3 \
+    --hidden-import=mutagen.flac \
+    --hidden-import=mutagen.oggvorbis \
     --exclude-module=PyQt5.QtBluetooth \
     --exclude-module=PyQt5.QtDBus \
     --exclude-module=PyQt5.QtDesigner \
@@ -94,8 +91,10 @@ pyinstaller --noconfirm \
     --exclude-module=PIL.ImageQt \
     --exclude-module=unittest \
     --exclude-module=test \
+    --exclude-module=hypothesis \
+    --exclude-module=pytest \
     --strip \
-    music_player.py
+    music_player_app.py
 
 echo "✓ 应用构建完成"
 echo ""
@@ -128,7 +127,7 @@ echo ""
 
 # 5. 创建 DMG 安装包
 echo "📀 步骤 5/6: 创建 DMG 安装包..."
-DMG_NAME="音乐播放器-v1.0.0.dmg"
+DMG_NAME="音乐播放器-v2.0.0.dmg"
 rm -f "$DMG_NAME"
 
 # 创建临时目录用于 DMG
@@ -143,7 +142,7 @@ cp -R "dist/音乐播放器.app" "$DMG_TEMP/"
 ln -s /Applications "$DMG_TEMP/Applications"
 
 # 创建 DMG
-hdiutil create -volname "音乐播放器" \
+hdiutil create -volname "音乐播放器 v2.0" \
     -srcfolder "$DMG_TEMP" \
     -ov \
     -format UDZO \
@@ -171,4 +170,14 @@ echo ""
 echo "📤 分发："
 echo "  • 分享 $DMG_NAME 给其他用户"
 echo "  • 上传到 GitHub Releases"
+echo ""
+echo "🎉 新功能："
+echo "  • 可拖动进度条"
+echo "  • 多种播放模式（顺序/循环/随机/单曲）"
+echo "  • 搜索过滤播放列表"
+echo "  • 显示歌曲元数据和封面"
+echo "  • 保存/加载播放列表"
+echo "  • 键盘快捷键支持"
+echo "  • 系统托盘支持"
+echo "  • 模块化架构"
 echo ""
