@@ -2,8 +2,8 @@
 
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtCore import QTimer
+from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtCore import QTimer
 
 from .models.playback_engine import PlaybackEngine
 from .models.playlist_manager import PlaylistManager
@@ -62,24 +62,26 @@ class MusicPlayerApp:
     
     def _connect_signals(self) -> None:
         """连接信号"""
-        # 控制面板信号
-        self.main_window.control_panel.play_pause_clicked.connect(
+        # 主窗口控制信号
+        self.main_window.play_pause_clicked.connect(
             self.controller.play_pause
         )
-        self.main_window.control_panel.stop_clicked.connect(
-            self.controller.stop
-        )
-        self.main_window.control_panel.prev_clicked.connect(
+        self.main_window.prev_clicked.connect(
             self.controller.previous_track
         )
-        self.main_window.control_panel.next_clicked.connect(
+        self.main_window.next_clicked.connect(
             self.controller.next_track
         )
-        self.main_window.control_panel.seek_requested.connect(
+        self.main_window.seek_requested.connect(
             self.controller.seek
         )
-        self.main_window.control_panel.volume_changed.connect(
+        self.main_window.volume_changed.connect(
             self.controller.set_volume
+        )
+        
+        # 窗口关闭信号
+        self.main_window.window_closing.connect(
+            self._save_state
         )
         
         # 播放列表信号
@@ -105,20 +107,6 @@ class MusicPlayerApp:
         )
         self.main_window.load_playlist_requested.connect(
             self._on_load_playlist
-        )
-        
-        # 播放模式按钮
-        self.main_window.sequential_btn.clicked.connect(
-            lambda: self.controller.set_play_mode(PlaybackMode.SEQUENTIAL)
-        )
-        self.main_window.loop_btn.clicked.connect(
-            lambda: self.controller.set_play_mode(PlaybackMode.LOOP)
-        )
-        self.main_window.shuffle_btn.clicked.connect(
-            lambda: self.controller.set_play_mode(PlaybackMode.SHUFFLE)
-        )
-        self.main_window.single_btn.clicked.connect(
-            lambda: self.controller.set_play_mode(PlaybackMode.SINGLE_REPEAT)
         )
         
         # 控制器信号
@@ -172,7 +160,7 @@ class MusicPlayerApp:
         """清空播放列表"""
         self.controller.stop()
         self.playlist_manager.clear()
-        self.main_window.control_panel.reset_progress()
+        self.main_window.reset_progress()
         self.main_window.clear_now_playing()
         self.logger.info("清空播放列表")
     
@@ -225,11 +213,11 @@ class MusicPlayerApp:
     def _on_state_changed(self, state: str) -> None:
         """播放状态变化"""
         is_playing = state == "playing"
-        self.main_window.control_panel.update_play_button(is_playing)
+        self.main_window.update_play_button(is_playing)
         self.system_tray.update_play_pause_action(is_playing)
         
         if state == "stopped":
-            self.main_window.control_panel.reset_progress()
+            self.main_window.reset_progress()
             self.main_window.clear_now_playing()
     
     def _on_error(self, message: str) -> None:
@@ -242,7 +230,7 @@ class MusicPlayerApp:
         if self.engine.is_playing() or self.engine.is_paused():
             position = self.engine.get_position()
             duration = self.engine.get_duration()
-            self.main_window.control_panel.update_progress(position, duration)
+            self.main_window.update_progress(position, duration)
     
     def _toggle_window_visibility(self) -> None:
         """切换窗口可见性"""
@@ -265,7 +253,7 @@ class MusicPlayerApp:
         
         # 恢复音量
         volume = self.config_manager.get("volume", 70)
-        self.main_window.control_panel.set_volume(volume)
+        self.main_window.volume_slider.setValue(volume)
         self.controller.set_volume(volume / 100.0)
         
         # 恢复播放模式
@@ -276,16 +264,29 @@ class MusicPlayerApp:
         except ValueError:
             pass
         
-        # 恢复窗口几何
-        geometry = self.config_manager.get("window_geometry")
-        if geometry:
-            # 这里可以恢复窗口位置和大小
-            pass
+        # 如果有恢复的曲目，更新界面显示
+        if self.controller.current_index >= 0:
+            track = self.playlist_manager.get_track(self.controller.current_index)
+            if track:
+                self.main_window.update_now_playing(
+                    track.title,
+                    track.artist,
+                    track.album,
+                    track.cover_art
+                )
+                self.main_window.playlist_view.update_current_track(self.controller.current_index)
+                
+                # 更新进度显示
+                saved_position = self.config_manager.get("current_position", 0.0)
+                if saved_position > 0:
+                    self.main_window.update_progress(saved_position, track.duration)
+                
+                self.logger.info(f"恢复状态: {track.get_display_name()}, 位置={saved_position:.2f}秒")
     
     def _save_state(self) -> None:
         """保存状态"""
         # 保存音量
-        volume = self.main_window.control_panel.volume_slider.value()
+        volume = self.main_window.volume_slider.value()
         self.config_manager.set("volume", volume)
         
         # 保存播放模式
@@ -297,11 +298,18 @@ class MusicPlayerApp:
         playlist_paths = [track.file_path for track in tracks]
         self.config_manager.set("playlist", playlist_paths)
         
-        # 保存当前曲目
+        # 保存当前曲目和播放位置
         self.config_manager.set("current_track_index", self.controller.current_index)
+        
+        # 获取当前播放位置
+        current_position = 0.0
+        if self.engine.is_playing() or self.engine.is_paused():
+            current_position = self.engine.get_position()
+        self.config_manager.set("current_position", current_position)
         
         # 保存配置
         self.config_manager.save_config()
+        self.logger.info(f"保存状态: 曲目索引={self.controller.current_index}, 播放位置={current_position:.2f}秒")
     
     def run(self) -> int:
         """运行应用

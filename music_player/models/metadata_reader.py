@@ -2,8 +2,8 @@
 
 import os
 from typing import Optional, Dict
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import QByteArray
+from PySide6.QtGui import QPixmap
+from PySide6.QtCore import QByteArray
 from mutagen import File as MutagenFile
 from mutagen.mp3 import MP3
 from mutagen.flac import FLAC

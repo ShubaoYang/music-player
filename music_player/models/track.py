@@ -3,7 +3,7 @@
 import os
 from dataclasses import dataclass
 from typing import Optional
-from PyQt5.QtGui import QPixmap
+from PySide6.QtGui import QPixmap
 
 
 @dataclass

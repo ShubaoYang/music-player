@@ -2,7 +2,7 @@
 
 import os
 from typing import List, Optional
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 
 from ..models.playback_engine import PlaybackEngine
 from ..models.playlist_manager import PlaylistManager
@@ -16,8 +16,8 @@ class PlayerController(QObject):
     """协调各组件之间的交互"""
     
     # 信号
-    track_changed = pyqtSignal(int)  # 当前曲目变化
-    error_occurred = pyqtSignal(str)  # 错误发生
+    track_changed = Signal(int)  # 当前曲目变化
+    error_occurred = Signal(str)  # 错误发生
     
     def __init__(self, engine: PlaybackEngine, playlist: PlaylistManager, 
                  config: ConfigManager, metadata_reader: MetadataReader):
@@ -36,6 +36,8 @@ class PlayerController(QObject):
         self.metadata_reader = metadata_reader
         
         self.current_index = -1
+        self._consecutive_failures = 0  # 连续失败计数器
+        self._max_failures = 5  # 最大连续失败次数
         
         # 连接信号
         self.engine.track_finished.connect(self._on_track_finished)
@@ -50,6 +52,8 @@ class PlayerController(QObject):
             # 如果没有播放，从当前索引开始
             if self.current_index == -1 and self.playlist.get_track_count() > 0:
                 self.current_index = 0
+            # 重置失败计数器（用户手动操作）
+            self._consecutive_failures = 0
             self.play_track_at_index(self.current_index)
     
     def stop(self) -> None:
@@ -61,11 +65,16 @@ class PlayerController(QObject):
         next_index = self.playlist.get_next_track(self.current_index)
         if next_index is not None:
             self.play_track_at_index(next_index)
+        else:
+            # 没有下一首了，重置失败计数
+            self._consecutive_failures = 0
     
     def previous_track(self) -> None:
         """上一首"""
         prev_index = self.playlist.get_previous_track(self.current_index)
         if prev_index is not None:
+            # 重置失败计数器（用户手动切换）
+            self._consecutive_failures = 0
             self.play_track_at_index(prev_index)
     
     def play_track_at_index(self, index: int) -> None:
@@ -78,9 +87,17 @@ class PlayerController(QObject):
         if track is None:
             return
         
+        # 检查是否超过最大失败次数
+        if self._consecutive_failures >= self._max_failures:
+            self.error_occurred.emit(f"连续 {self._max_failures} 首歌曲无法播放，已停止播放。\n\n请检查文件格式或完整性。")
+            self._consecutive_failures = 0
+            self.engine.stop()
+            return
+        
         # 检查文件是否存在
         if not os.path.exists(track.file_path):
             self.error_occurred.emit(f"文件不存在: {track.file_path}")
+            self._consecutive_failures += 1
             # 跳到下一首
             self.next_track()
             return
@@ -90,9 +107,20 @@ class PlayerController(QObject):
             self.engine.set_duration(track.duration)
             self.engine.play()
             self.current_index = index
+            self._consecutive_failures = 0  # 重置失败计数
             self.track_changed.emit(index)
         else:
-            self.error_occurred.emit(f"无法播放: {track.file_path}")
+            # 加载失败
+            self._consecutive_failures += 1
+            
+            # 只在第一次失败时显示详细错误
+            if self._consecutive_failures == 1:
+                file_ext = os.path.splitext(track.file_path)[1].upper()
+                error_msg = f"无法播放 {file_ext} 文件: {track.title}"
+                if "FLAC" in file_ext:
+                    error_msg += "\n\n该 FLAC 文件可能损坏或使用了不支持的编码格式。"
+                self.error_occurred.emit(error_msg)
+            
             # 跳到下一首
             self.next_track()
     
@@ -160,11 +188,16 @@ class PlayerController(QObject):
     
     def save_state(self) -> None:
         """保存当前状态"""
+        # 获取当前播放位置
+        current_position = 0.0
+        if self.engine.is_playing() or self.engine.is_paused():
+            current_position = self.engine.get_position()
+        
         config = {
-            "volume": int(self.engine.is_playing() and 100 or 70),  # 简化处理
+            "volume": self.config.get("volume", 70),
             "playback_mode": self.playlist.get_play_mode().value,
             "current_track_index": self.current_index,
-            "current_position": self.engine.get_position(),
+            "current_position": current_position,
             "playlist": [track.file_path for track in self.playlist.get_all_tracks()]
         }
         self.config.save_config(config)
@@ -186,8 +219,19 @@ class PlayerController(QObject):
         if playlist_paths:
             self.add_tracks(playlist_paths)
         
-        # 恢复当前曲目索引
+        # 恢复当前曲目索引和播放位置
         self.current_index = config.get("current_track_index", -1)
+        saved_position = config.get("current_position", 0.0)
+        
+        # 如果有保存的曲目，加载它并设置到保存的位置（暂停状态）
+        if self.current_index >= 0 and self.current_index < self.playlist.get_track_count():
+            track = self.playlist.get_track(self.current_index)
+            if track and os.path.exists(track.file_path):
+                # 使用新方法加载并设置位置
+                if self.engine.load_and_set_position(track.file_path, saved_position):
+                    self.engine.set_duration(track.duration)
+                    # 发送曲目变化信号以更新界面
+                    self.track_changed.emit(self.current_index)
     
     def _on_track_finished(self) -> None:
         """曲目播放完成处理"""

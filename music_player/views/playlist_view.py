@@ -1,10 +1,10 @@
 """播放列表视图"""
 
 from typing import List
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QListWidget, 
-                             QListWidgetItem, QLabel, QLineEdit, QMenu, QAction)
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFont
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QListWidget, 
+                               QListWidgetItem, QLabel, QLineEdit, QMenu)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QFont, QAction
 
 from ..models.track import Track
 
@@ -13,9 +13,9 @@ class PlaylistView(QWidget):
     """播放列表视图"""
     
     # 信号
-    track_double_clicked = pyqtSignal(int)
-    track_delete_requested = pyqtSignal(int)
-    search_changed = pyqtSignal(str)
+    track_double_clicked = Signal(int)
+    track_delete_requested = Signal(int)
+    search_changed = Signal(str)
     
     def __init__(self):
         """初始化播放列表视图"""
@@ -27,51 +27,71 @@ class PlaylistView(QWidget):
     def init_ui(self) -> None:
         """初始化界面"""
         layout = QVBoxLayout(self)
-        layout.setSpacing(10)
+        layout.setSpacing(12)
+        
+        # 顶部栏：搜索 + 统计信息
+        header_widget = QWidget()
+        header_widget.setStyleSheet("""
+            background: rgba(15, 15, 15, 0.9);
+            border-radius: 12px;
+            padding: 10px;
+        """)
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setSpacing(12)
         
         # 搜索框
-        search_layout = QHBoxLayout()
-        search_label = QLabel("🔍 搜索:")
-        search_label.setFont(QFont("Arial", 10))
-        search_layout.addWidget(search_label)
+        search_icon = QLabel("🔍")
+        search_icon.setFont(QFont("SF Pro Display", 16))
+        search_icon.setStyleSheet("background: transparent;")
+        header_layout.addWidget(search_icon)
         
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("搜索歌曲、艺术家、专辑...")
+        self.search_box.setStyleSheet("""
+            QLineEdit {
+                background-color: rgba(25, 25, 25, 0.9);
+                border: 1px solid rgba(50, 50, 50, 0.8);
+                border-radius: 10px;
+                padding: 8px 14px;
+                color: #ffffff;
+                font-size: 13px;
+            }
+            QLineEdit:focus {
+                border: 1px solid rgba(80, 80, 80, 0.9);
+                background-color: rgba(30, 30, 30, 0.95);
+            }
+            QLineEdit::placeholder {
+                color: rgba(255, 255, 255, 0.3);
+            }
+        """)
         self.search_box.textChanged.connect(self._on_search_changed)
-        search_layout.addWidget(self.search_box)
+        header_layout.addWidget(self.search_box, 1)
         
-        layout.addLayout(search_layout)
-        
-        # 播放列表标签
-        header_layout = QHBoxLayout()
-        
-        self.playlist_label = QLabel("播放列表")
-        self.playlist_label.setFont(QFont("Arial", 12, QFont.Bold))
-        self.playlist_label.setStyleSheet(
-            "padding: 5px; background-color: #16213e; border-radius: 5px;"
-        )
-        header_layout.addWidget(self.playlist_label)
-        
-        self.count_label = QLabel("0 首歌曲")
-        self.count_label.setFont(QFont("Arial", 10))
-        self.count_label.setStyleSheet("color: #a0a0a0;")
+        # 统计信息
+        self.count_label = QLabel("0 首")
+        self.count_label.setFont(QFont("SF Pro Display", 11, QFont.Weight.Bold))
+        self.count_label.setStyleSheet("""
+            color: rgba(255, 255, 255, 0.8);
+            background: transparent;
+        """)
         header_layout.addWidget(self.count_label)
         
-        header_layout.addStretch()
-        
-        self.duration_label = QLabel("总时长: 00:00")
-        self.duration_label.setFont(QFont("Arial", 10))
-        self.duration_label.setStyleSheet("color: #a0a0a0;")
+        self.duration_label = QLabel("00:00")
+        self.duration_label.setFont(QFont("SF Pro Display", 11, QFont.Weight.Bold))
+        self.duration_label.setStyleSheet("""
+            color: rgba(255, 255, 255, 0.6);
+            background: transparent;
+        """)
         header_layout.addWidget(self.duration_label)
         
-        layout.addLayout(header_layout)
+        layout.addWidget(header_widget)
         
         # 播放列表
         self.list_widget = QListWidget()
-        self.list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.list_widget.customContextMenuRequested.connect(self._show_context_menu)
         self.list_widget.itemDoubleClicked.connect(self._on_item_double_clicked)
-        self.list_widget.setDragDropMode(QListWidget.InternalMove)
+        self.list_widget.setDragDropMode(QListWidget.DragDropMode.InternalMove)
         layout.addWidget(self.list_widget)
     
     def set_tracks(self, tracks: List[Track]) -> None:
@@ -136,7 +156,7 @@ class PlaylistView(QWidget):
     def _update_stats(self) -> None:
         """更新统计信息"""
         count = len(self._filtered_tracks)
-        self.count_label.setText(f"{count} 首歌曲")
+        self.count_label.setText(f"{count} 首")
         
         # 计算总时长
         total_duration = sum(track.duration for track in self._filtered_tracks)
@@ -144,9 +164,9 @@ class PlaylistView(QWidget):
         minutes = int((total_duration % 3600) // 60)
         
         if hours > 0:
-            duration_text = f"总时长: {hours}:{minutes:02d}:00"
+            duration_text = f"{hours}:{minutes:02d}:00"
         else:
-            duration_text = f"总时长: {minutes:02d}:00"
+            duration_text = f"{minutes:02d}:00"
         
         self.duration_label.setText(duration_text)
     
@@ -171,6 +191,23 @@ class PlaylistView(QWidget):
             return
         
         menu = QMenu(self)
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: rgba(20, 20, 20, 0.98);
+                color: white;
+                border: 1px solid rgba(80, 80, 80, 0.5);
+                border-radius: 12px;
+                padding: 8px;
+            }
+            QMenu::item {
+                padding: 10px 25px;
+                border-radius: 8px;
+                margin: 2px 4px;
+            }
+            QMenu::item:selected {
+                background: rgba(80, 80, 80, 0.8);
+            }
+        """)
         
         delete_action = QAction("🗑 删除", self)
         delete_action.triggered.connect(lambda: self._delete_selected())

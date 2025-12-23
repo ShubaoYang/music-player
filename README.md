@@ -1,6 +1,6 @@
 # 🎵 本地音乐播放器
 
-一个使用 Python + PyQt5 + Pygame 开发的精美桌面音乐播放器。
+一个使用 Python + PySide6 + Pygame 开发的精美桌面音乐播放器。
 
 ## ✨ 特性
 
@@ -140,10 +140,12 @@ python3 music_player_app.py
 ## 🔧 技术栈
 
 - Python 3.7+
-- PyQt5（GUI 界面）
+- **PySide6**（GUI 界面 - Qt for Python 官方绑定）
 - Pygame（音频播放）
 - Mutagen（元数据读取）
 - SDL2（音频后端）
+
+> **注意**: 本项目已从 PyQt5 迁移到 PySide6。PySide6 是 Qt 官方支持的 Python 绑定，提供更好的许可证（LGPL）和更活跃的社区支持。详见 [MIGRATION_TO_PYSIDE6.md](MIGRATION_TO_PYSIDE6.md)
 
 ## 🏗️ 项目结构
 
@@ -246,4 +248,4 @@ flake8 music_player/
 
 ---
 
-**Made with ❤️ using Python, PyQt5, and Pygame**
+**Made with ❤️ using Python, PySide6, and Pygame**

@@ -4,7 +4,7 @@ import os
 import json
 import random
 from typing import List, Optional
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 
 from .track import Track
 from .playback_mode import PlaybackMode
@@ -14,8 +14,8 @@ class PlaylistManager(QObject):
     """管理播放列表和播放顺序"""
     
     # 信号
-    playlist_changed = pyqtSignal()  # 播放列表变化
-    play_mode_changed = pyqtSignal(PlaybackMode)  # 播放模式变化
+    playlist_changed = Signal()  # 播放列表变化
+    play_mode_changed = Signal(PlaybackMode)  # 播放模式变化
     
     def __init__(self):
         """初始化播放列表管理器"""

@@ -1,19 +1,19 @@
 """系统托盘"""
 
-from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QAction
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSignal, QObject
+from PySide6.QtWidgets import QSystemTrayIcon, QMenu
+from PySide6.QtGui import QIcon, QAction
+from PySide6.QtCore import Signal, QObject
 
 
 class SystemTray(QObject):
     """系统托盘图标"""
     
     # 信号
-    play_pause_requested = pyqtSignal()
-    next_requested = pyqtSignal()
-    previous_requested = pyqtSignal()
-    show_requested = pyqtSignal()
-    quit_requested = pyqtSignal()
+    play_pause_requested = Signal()
+    next_requested = Signal()
+    previous_requested = Signal()
+    show_requested = Signal()
+    quit_requested = Signal()
     
     def __init__(self, parent=None):
         """初始化系统托盘
@@ -100,6 +100,6 @@ class SystemTray(QObject):
         Args:
             reason: 激活原因
         """
-        if reason == QSystemTrayIcon.Trigger:
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
             # 单击托盘图标，显示/隐藏窗口
             self.show_requested.emit()

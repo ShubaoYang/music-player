@@ -1,7 +1,8 @@
 """播放引擎"""
 
+import os
 from typing import Optional, List
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 from pygame import mixer
 import time
 
@@ -10,9 +11,9 @@ class PlaybackEngine(QObject):
     """音频播放引擎"""
     
     # 信号
-    track_finished = pyqtSignal()  # 曲目播放完成
-    position_changed = pyqtSignal(float)  # 播放位置变化
-    state_changed = pyqtSignal(str)  # 播放状态变化
+    track_finished = Signal()  # 曲目播放完成
+    position_changed = Signal(float)  # 播放位置变化
+    state_changed = Signal(str)  # 播放状态变化
     
     def __init__(self):
         """初始化播放引擎"""
@@ -41,7 +42,12 @@ class PlaybackEngine(QObject):
             self._duration = 0.0  # 将在播放时获取
             return True
         except Exception as e:
-            print(f"加载音轨失败: {e}")
+            error_msg = str(e)
+            # 简化 FLAC 错误信息
+            if "FLAC" in error_msg:
+                print(f"加载音轨失败: FLAC 文件可能损坏或格式不支持 - {os.path.basename(file_path)}")
+            else:
+                print(f"加载音轨失败: {error_msg}")
             return False
     
     def play(self) -> None:
@@ -60,9 +66,11 @@ class PlaybackEngine(QObject):
     def pause(self) -> None:
         """暂停"""
         if self._is_playing and not self._is_paused:
+            # 先获取当前位置再暂停
+            current_pos = time.time() - self._start_time
             mixer.music.pause()
             self._is_paused = True
-            self._pause_position = self.get_position()
+            self._pause_position = current_pos
             self.state_changed.emit("paused")
     
     def stop(self) -> None:
@@ -79,25 +87,73 @@ class PlaybackEngine(QObject):
         Args:
             position: 位置（秒）
         """
-        # pygame.mixer.music 不支持直接 seek
-        # 我们需要重新加载并从指定位置开始播放
-        if self._current_file:
-            was_playing = self._is_playing and not self._is_paused
+        if not self._current_file:
+            return
             
+        was_playing = self._is_playing and not self._is_paused
+        
+        try:
+            # 停止当前播放
+            mixer.music.stop()
+            
+            # 重新加载文件
+            mixer.music.load(self._current_file)
+            
+            # 尝试使用 set_pos (仅支持 MP3/OGG)
             try:
-                mixer.music.load(self._current_file)
+                mixer.music.set_pos(position)
+                mixer.music.play()
+            except:
+                # 如果 set_pos 不支持，使用 start 参数
                 mixer.music.play(start=position)
-                self._start_time = time.time() - position
+            
+            # 更新时间基准
+            self._start_time = time.time() - position
+            self._is_playing = True
+            self._is_paused = False
+            
+            # 如果之前是暂停状态，立即暂停
+            if not was_playing:
+                mixer.music.pause()
+                self._is_paused = True
+                self._pause_position = position
                 
-                if not was_playing:
-                    mixer.music.pause()
-                    self._is_paused = True
-                    self._pause_position = position
-                else:
-                    self._is_playing = True
-                    self._is_paused = False
-            except Exception as e:
-                print(f"跳转失败: {e}")
+        except Exception as e:
+            print(f"跳转失败: {e}")
+    
+    def load_and_set_position(self, file_path: str, position: float = 0.0) -> bool:
+        """加载音轨并设置到指定位置（暂停状态）
+        
+        Args:
+            file_path: 音频文件路径
+            position: 起始位置（秒）
+            
+        Returns:
+            是否加载成功
+        """
+        try:
+            mixer.music.load(file_path)
+            self._current_file = file_path
+            
+            if position > 0:
+                # 从指定位置开始播放然后立即暂停
+                mixer.music.play(start=position)
+                mixer.music.pause()
+                self._is_playing = True
+                self._is_paused = True
+                self._pause_position = position
+                self._start_time = time.time() - position
+            else:
+                # 位置为0，只是加载不播放
+                self._is_playing = False
+                self._is_paused = False
+                self._pause_position = 0.0
+                self._start_time = 0.0
+                
+            return True
+        except Exception as e:
+            print(f"加载音轨失败: {e}")
+            return False
     
     def get_position(self) -> float:
         """获取当前播放位置
