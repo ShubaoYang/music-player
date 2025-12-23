@@ -43,3 +43,5 @@ music_player_config.json
 assets/*.iconset/
 assets/temp_*.png
 
+*.spec
+

@@ -88,9 +88,42 @@ pyinstaller --noconfirm \
     --exclude-module=PyQt5.QtWebSockets \
     --exclude-module=PyQt5.QtXml \
     --exclude-module=PyQt5.QtXmlPatterns \
+    --exclude-module=tkinter \
+    --exclude-module=matplotlib \
+    --exclude-module=numpy \
+    --exclude-module=PIL.ImageQt \
+    --exclude-module=unittest \
+    --exclude-module=test \
+    --strip \
     music_player.py
 
 echo "✓ 应用构建完成"
+echo ""
+
+# 4.5. 清理不必要的文件以减小体积
+echo "🗜️  步骤 4.5/6: 优化应用体积..."
+APP_PATH="dist/音乐播放器.app"
+
+# 删除不需要的 Qt 翻译文件（保留中文和英文）
+find "$APP_PATH" -name "qt_*.qm" ! -name "qt_zh*.qm" ! -name "qt_en*.qm" -delete 2>/dev/null || true
+
+# 删除 Qt 文档
+find "$APP_PATH" -type d -name "doc" -exec rm -rf {} + 2>/dev/null || true
+
+# 删除测试文件
+find "$APP_PATH" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+find "$APP_PATH" -type d -name "test" -exec rm -rf {} + 2>/dev/null || true
+
+# 删除示例文件
+find "$APP_PATH" -type d -name "examples" -exec rm -rf {} + 2>/dev/null || true
+
+# 删除 .pyc 缓存文件
+find "$APP_PATH" -name "*.pyc" -delete 2>/dev/null || true
+find "$APP_PATH" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+
+# 显示最终大小
+APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
+echo "✓ 优化完成，应用大小: $APP_SIZE"
 echo ""
 
 # 5. 创建 DMG 安装包
