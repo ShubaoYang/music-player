@@ -94,7 +94,7 @@ class PlaybackEngine(QObject):
             self._is_playing = True
             self.state_changed.emit("playing")
         else:
-            # 开始新的播放
+            # 开始新的播放（从当前位置）
             self._stop_event.clear()
             self._pause_event.clear()
             self._is_playing = True
@@ -148,19 +148,42 @@ class PlaybackEngine(QObject):
         
         was_playing = self._is_playing and not self._is_paused
         
-        # 停止当前播放
-        self.stop()
+        # 停止当前播放（不触发信号）
+        self._stop_event.set()
+        self._pause_event.clear()
+        
+        # 停止音频流
+        if self._stream is not None:
+            try:
+                self._stream.stop()
+                self._stream.close()
+            except:
+                pass
+            self._stream = None
+        
+        # 等待播放线程结束
+        if self._play_thread and self._play_thread.is_alive():
+            self._play_thread.join(timeout=0.5)
         
         # 设置新位置
         self._position = position
         self._current_frame = int(position * self._sample_rate)
         
+        # 重置标志
+        self._stop_event.clear()
+        
         # 如果之前在播放，继续播放
         if was_playing:
+            self._is_playing = False  # 重置状态
+            self._is_paused = False
             self.play()
+        else:
+            # 如果之前是暂停状态，保持暂停
+            self._is_playing = False
+            self._is_paused = False
     
     def load_and_set_position(self, file_path: str, position: float = 0.0) -> bool:
-        """加载音轨并设置到指定位置（暂停状态）
+        """加载音轨并设置到指定位置（准备播放状态）
         
         Args:
             file_path: 音频文件路径
@@ -170,8 +193,14 @@ class PlaybackEngine(QObject):
             是否加载成功
         """
         if self.load_track(file_path):
+            # 设置位置
             self._position = min(position, self._duration)
             self._current_frame = int(self._position * self._sample_rate)
+            
+            # 不设置播放状态，保持加载状态
+            # 这样点击播放时会从当前位置开始
+            
+            print(f"✓ 已加载并设置位置: {os.path.basename(file_path)} 到 {position:.2f}秒")
             return True
         return False
     

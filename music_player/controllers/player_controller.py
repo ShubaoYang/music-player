@@ -49,12 +49,17 @@ class PlayerController(QObject):
         elif self.engine.is_paused():
             self.engine.play()
         else:
-            # 如果没有播放，从当前索引开始
-            if self.current_index == -1 and self.playlist.get_track_count() > 0:
-                self.current_index = 0
-            # 重置失败计数器（用户手动操作）
-            self._consecutive_failures = 0
-            self.play_track_at_index(self.current_index)
+            # 如果没有播放，检查是否已经加载了曲目
+            if self.engine._audio_data is not None:
+                # 已经加载了曲目（可能是恢复状态），直接播放
+                self.engine.play()
+            else:
+                # 没有加载曲目，从当前索引开始
+                if self.current_index == -1 and self.playlist.get_track_count() > 0:
+                    self.current_index = 0
+                # 重置失败计数器（用户手动操作）
+                self._consecutive_failures = 0
+                self.play_track_at_index(self.current_index)
     
     def stop(self) -> None:
         """停止播放"""
@@ -223,15 +228,23 @@ class PlayerController(QObject):
         self.current_index = config.get("current_track_index", -1)
         saved_position = config.get("current_position", 0.0)
         
+        print(f"🔄 恢复状态: 曲目索引={self.current_index}, 保存位置={saved_position:.2f}秒")
+        
         # 如果有保存的曲目，加载它并设置到保存的位置（暂停状态）
         if self.current_index >= 0 and self.current_index < self.playlist.get_track_count():
             track = self.playlist.get_track(self.current_index)
             if track and os.path.exists(track.file_path):
+                print(f"📀 加载曲目: {track.title}")
                 # 使用新方法加载并设置位置
                 if self.engine.load_and_set_position(track.file_path, saved_position):
                     self.engine.set_duration(track.duration)
+                    print(f"✓ 引擎位置已设置为: {self.engine.get_position():.2f}秒")
                     # 发送曲目变化信号以更新界面
                     self.track_changed.emit(self.current_index)
+                else:
+                    print(f"❌ 加载曲目失败")
+            else:
+                print(f"❌ 曲目不存在或文件路径无效")
     
     def _on_track_finished(self) -> None:
         """曲目播放完成处理"""

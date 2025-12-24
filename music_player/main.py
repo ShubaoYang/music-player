@@ -216,7 +216,8 @@ class MusicPlayerApp:
         self.main_window.update_play_button(is_playing)
         self.system_tray.update_play_pause_action(is_playing)
         
-        if state == "stopped":
+        # 只有在没有当前曲目时才清空界面
+        if state == "stopped" and self.controller.current_index == -1:
             self.main_window.reset_progress()
             self.main_window.clear_now_playing()
     
@@ -278,8 +279,10 @@ class MusicPlayerApp:
                 
                 # 更新进度显示
                 saved_position = self.config_manager.get("current_position", 0.0)
-                if saved_position > 0:
-                    self.main_window.update_progress(saved_position, track.duration)
+                self.main_window.update_progress(saved_position, track.duration)
+                
+                # 确保播放按钮显示为"播放"（因为恢复后是暂停状态）
+                self.main_window.update_play_button(False)
                 
                 self.logger.info(f"恢复状态: {track.get_display_name()}, 位置={saved_position:.2f}秒")
     
