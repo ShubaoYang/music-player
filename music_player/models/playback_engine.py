@@ -271,6 +271,8 @@ class PlaybackEngine(QObject):
     
     def _play_audio(self) -> None:
         """在后台线程中播放音频"""
+        playback_completed = False  # 标记是否正常播放完成
+        
         try:
             # 从当前帧开始播放
             start_frame = self._current_frame
@@ -336,10 +338,11 @@ class PlaybackEngine(QObject):
                 while stream.active and not self._stop_event.is_set():
                     sd.sleep(100)
             
-            # 如果正常播放完毕
+            # 如果正常播放完毕（不是被停止）
             if not self._stop_event.is_set() and current_pos[0] >= len(audio_to_play):
-                self._is_playing = False
+                playback_completed = True
                 self._position = self._duration
+                print("🎵 播放线程：音频播放完成")
                 
         except sd.CallbackStop:
             pass
@@ -347,15 +350,27 @@ class PlaybackEngine(QObject):
             print(f"❌ 播放错误: {e}")
             import traceback
             traceback.print_exc()
-            self._is_playing = False
+        finally:
+            # 线程结束时，如果是正常播放完成，触发信号
+            if playback_completed:
+                print("🎵 播放线程：准备触发 track_finished 信号")
+                # 注意：不要在这里设置 _is_playing = False
+                # 让 _check_playback_finished 来处理
     
     def _check_playback_finished(self) -> None:
         """检查播放是否结束"""
-        if self._is_playing and not self._is_paused:
-            # 检查播放线程是否结束
-            if self._play_thread and not self._play_thread.is_alive():
+        # 检查播放线程是否结束
+        if self._play_thread and not self._play_thread.is_alive():
+            # 线程已结束
+            if self._is_playing:  # 之前是播放状态
                 if not self._stop_event.is_set():  # 自然结束，不是被停止
+                    print("🎵 检测到播放完成，触发 track_finished 信号")
                     self._is_playing = False
                     self._is_paused = False
                     self.state_changed.emit("stopped")
                     self.track_finished.emit()
+                else:
+                    # 被手动停止
+                    print("⏹ 检测到手动停止")
+                    self._is_playing = False
+                    self._is_paused = False

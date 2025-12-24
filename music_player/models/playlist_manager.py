@@ -141,6 +141,15 @@ class PlaylistManager(QObject):
             if not self._shuffle_order:
                 self._generate_shuffle_order()
             
+            # 找到当前索引在随机列表中的位置
+            try:
+                self._shuffle_index = self._shuffle_order.index(current_index)
+            except ValueError:
+                # 如果当前索引不在随机列表中，重新生成
+                self._generate_shuffle_order()
+                self._shuffle_index = 0
+            
+            # 获取下一个随机索引
             self._shuffle_index = (self._shuffle_index + 1) % len(self._shuffle_order)
             return self._shuffle_order[self._shuffle_index]
         
@@ -172,6 +181,15 @@ class PlaylistManager(QObject):
             if not self._shuffle_order:
                 self._generate_shuffle_order()
             
+            # 找到当前索引在随机列表中的位置
+            try:
+                self._shuffle_index = self._shuffle_order.index(current_index)
+            except ValueError:
+                # 如果当前索引不在随机列表中，重新生成
+                self._generate_shuffle_order()
+                self._shuffle_index = 0
+            
+            # 获取上一个随机索引
             self._shuffle_index = (self._shuffle_index - 1) % len(self._shuffle_order)
             return self._shuffle_order[self._shuffle_index]
         

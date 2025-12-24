@@ -28,6 +28,7 @@ class MainWindow(QMainWindow):
     seek_requested = Signal(float)
     volume_changed = Signal(float)
     window_closing = Signal()  # 窗口关闭信号
+    mini_mode_requested = Signal()  # 切换到迷你模式
     
     def __init__(self):
         """初始化主窗口"""
@@ -559,6 +560,12 @@ class MainWindow(QMainWindow):
         clear_action = QAction("🗑 清空列表", self)
         clear_action.triggered.connect(self._clear_playlist)
         menu.addAction(clear_action)
+        
+        menu.addSeparator()
+        
+        mini_action = QAction("🎵 迷你模式", self)
+        mini_action.triggered.connect(self.mini_mode_requested.emit)
+        menu.addAction(mini_action)
         
         self.menu_btn.setMenu(menu)
     

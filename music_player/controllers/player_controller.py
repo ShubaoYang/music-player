@@ -248,10 +248,15 @@ class PlayerController(QObject):
     
     def _on_track_finished(self) -> None:
         """曲目播放完成处理"""
+        print("🎵 控制器：收到 track_finished 信号")
+        
         # 根据播放模式决定下一步
         next_index = self.playlist.get_next_track(self.current_index)
+        
         if next_index is not None:
+            print(f"🎵 控制器：准备播放下一首，索引 {next_index}")
             self.play_track_at_index(next_index)
         else:
             # 顺序播放模式下，播放完最后一首就停止
+            print("🎵 控制器：没有下一首，停止播放")
             self.engine.stop()
