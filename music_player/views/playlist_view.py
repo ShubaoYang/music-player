@@ -29,6 +29,19 @@ class PlaylistView(QWidget):
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
         
+        # 设置tooltip样式
+        self.setStyleSheet("""
+            QToolTip {
+                background-color: rgba(30, 30, 30, 0.98);
+                color: white;
+                border: 1px solid rgba(80, 80, 80, 0.6);
+                border-radius: 8px;
+                padding: 8px 12px;
+                font-size: 12px;
+                font-family: "SF Pro Display", "Helvetica Neue", "Arial", sans-serif;
+            }
+        """)
+        
         # 顶部栏：搜索 + 统计信息
         header_widget = QWidget()
         header_widget.setStyleSheet("""

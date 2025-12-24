@@ -35,35 +35,61 @@ class MetadataReader:
         metadata = Metadata()
         
         try:
-            audio = MutagenFile(file_path, easy=True)
+            # 先尝试不使用 easy=True，获取更多信息
+            audio = MutagenFile(file_path)
             
             if audio is None:
                 # 无法读取元数据，使用文件名
+                print(f"⚠️ 无法读取元数据: {os.path.basename(file_path)}")
                 metadata.title = os.path.splitext(os.path.basename(file_path))[0]
                 metadata.duration = self.get_duration(file_path)
             else:
                 # 提取标题
-                if 'title' in audio and audio['title']:
-                    metadata.title = audio['title'][0]
-                else:
-                    metadata.title = os.path.splitext(os.path.basename(file_path))[0]
+                title = None
+                if hasattr(audio, 'tags') and audio.tags:
+                    # 尝试多种标题标签
+                    for key in ['title', 'TITLE', 'Title', '\xa9nam', 'TIT2']:
+                        if key in audio.tags:
+                            value = audio.tags[key]
+                            title = str(value[0]) if isinstance(value, list) else str(value)
+                            break
+                
+                metadata.title = title or os.path.splitext(os.path.basename(file_path))[0]
                 
                 # 提取艺术家
-                if 'artist' in audio and audio['artist']:
-                    metadata.artist = audio['artist'][0]
+                artist = None
+                if hasattr(audio, 'tags') and audio.tags:
+                    for key in ['artist', 'ARTIST', 'Artist', '\xa9ART', 'TPE1']:
+                        if key in audio.tags:
+                            value = audio.tags[key]
+                            artist = str(value[0]) if isinstance(value, list) else str(value)
+                            break
+                
+                metadata.artist = artist or "未知艺术家"
                 
                 # 提取专辑
-                if 'album' in audio and audio['album']:
-                    metadata.album = audio['album'][0]
+                album = None
+                if hasattr(audio, 'tags') and audio.tags:
+                    for key in ['album', 'ALBUM', 'Album', '\xa9alb', 'TALB']:
+                        if key in audio.tags:
+                            value = audio.tags[key]
+                            album = str(value[0]) if isinstance(value, list) else str(value)
+                            break
+                
+                metadata.album = album or "未知专辑"
                 
                 # 提取时长
                 metadata.duration = self.get_duration(file_path)
                 
                 # 提取封面
                 metadata.cover_art = self.get_cover_art(file_path)
+                
+                print(f"✓ 成功读取: {metadata.title} - {metadata.artist}")
         
         except Exception as e:
-            print(f"读取元数据失败 {file_path}: {e}")
+            print(f"❌ 读取元数据失败 {os.path.basename(file_path)}: {e}")
+            import traceback
+            traceback.print_exc()
             metadata.title = os.path.splitext(os.path.basename(file_path))[0]
             metadata.duration = self.get_duration(file_path)
         

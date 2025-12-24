@@ -211,7 +211,6 @@ class MainWindow(QMainWindow):
             }
             QPushButton:hover {
                 background: rgba(255, 255, 255, 1);
-                transform: scale(1.05);
             }
             QPushButton:pressed {
                 background: rgba(220, 220, 220, 0.95);
@@ -294,7 +293,6 @@ class MainWindow(QMainWindow):
                 font-size: 12px;
                 padding: 0px;
                 text-align: center;
-                qproperty-alignment: AlignCenter;
             }
             QPushButton:hover {
                 background: rgba(60, 60, 60, 0.95);
