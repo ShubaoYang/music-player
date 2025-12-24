@@ -2,7 +2,7 @@
 
 import os
 from typing import Optional, List
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, QTimer
 from pygame import mixer
 import time
 
@@ -26,6 +26,11 @@ class PlaybackEngine(QObject):
         self._duration = 0.0
         self._start_time = 0.0
         self._pause_position = 0.0
+        
+        # 创建定时器检测播放结束
+        self._check_timer = QTimer()
+        self._check_timer.timeout.connect(self._check_playback_finished)
+        self._check_timer.start(500)  # 每500ms检查一次
     
     def load_track(self, file_path: str) -> bool:
         """加载音轨
@@ -224,3 +229,14 @@ class PlaybackEngine(QObject):
         # pygame.mixer 不直接支持均衡器
         # 这里只是占位符，实际实现需要使用其他库
         pass
+    
+    def _check_playback_finished(self) -> None:
+        """检查播放是否结束"""
+        if self._is_playing and not self._is_paused:
+            # 检查 pygame mixer 是否还在播放
+            if not mixer.music.get_busy():
+                # 播放已结束
+                self._is_playing = False
+                self._is_paused = False
+                self.state_changed.emit("stopped")
+                self.track_finished.emit()
