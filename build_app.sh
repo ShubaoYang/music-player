@@ -52,17 +52,36 @@ pyinstaller --noconfirm \
     --hidden-import=PySide6.QtCore \
     --hidden-import=PySide6.QtGui \
     --hidden-import=PySide6.QtWidgets \
-    --hidden-import=pygame \
+    --hidden-import=soundfile \
+    --hidden-import=sounddevice \
+    --hidden-import=numpy \
     --hidden-import=mutagen \
     --hidden-import=mutagen.mp3 \
     --hidden-import=mutagen.flac \
     --hidden-import=mutagen.oggvorbis \
     --hidden-import=music_player \
     --hidden-import=music_player.models \
+    --hidden-import=music_player.models.playback_engine \
+    --hidden-import=music_player.models.playlist_manager \
+    --hidden-import=music_player.models.config_manager \
+    --hidden-import=music_player.models.metadata_reader \
+    --hidden-import=music_player.models.track \
+    --hidden-import=music_player.models.playback_mode \
     --hidden-import=music_player.views \
+    --hidden-import=music_player.views.main_window \
+    --hidden-import=music_player.views.mini_window \
+    --hidden-import=music_player.views.control_panel \
+    --hidden-import=music_player.views.playlist_view \
+    --hidden-import=music_player.views.system_tray \
     --hidden-import=music_player.controllers \
+    --hidden-import=music_player.controllers.player_controller \
     --hidden-import=music_player.utils \
+    --hidden-import=music_player.utils.logger \
     --collect-all=music_player \
+    --collect-all=soundfile \
+    --collect-all=sounddevice \
+    --copy-metadata=soundfile \
+    --copy-metadata=sounddevice \
     --exclude-module=PySide6.QtBluetooth \
     --exclude-module=PySide6.QtDBus \
     --exclude-module=PySide6.QtDesigner \
@@ -95,7 +114,6 @@ pyinstaller --noconfirm \
     --exclude-module=PyQt6 \
     --exclude-module=tkinter \
     --exclude-module=matplotlib \
-    --exclude-module=numpy \
     --exclude-module=PIL.ImageQt \
     --exclude-module=unittest \
     --exclude-module=test \
@@ -171,9 +189,14 @@ echo "  • dist/音乐播放器.app  - macOS 应用"
 echo "  • $DMG_NAME - 安装包"
 echo ""
 echo "🚀 使用方法："
-echo "  1. 双击 dist/音乐播放器.app 直接运行"
-echo "  2. 双击 $DMG_NAME 打开安装包"
-echo "  3. 拖动应用到 Applications 文件夹安装"
+echo "  1. 直接运行: open dist/音乐播放器.app"
+echo "  2. 调试运行: ./run_with_log.sh"
+echo "  3. 安装: 双击 $DMG_NAME"
+echo ""
+echo "� 如果应用闪退："
+echo "  1. 运行: ./run_with_log.sh"
+echo "  2. 查看日志: cat app_crash.log"
+echo "  3. 或直接运行: dist/音乐播放器.app/Contents/MacOS/音乐播放器"
 echo ""
 echo "📤 分发："
 echo "  • 分享 $DMG_NAME 给其他用户"
@@ -187,5 +210,6 @@ echo "  • 显示歌曲元数据和封面"
 echo "  • 保存/加载播放列表"
 echo "  • 键盘快捷键支持"
 echo "  • 系统托盘支持"
+echo "  • 迷你模式（v0.3 新增）"
 echo "  • 模块化架构"
 echo ""

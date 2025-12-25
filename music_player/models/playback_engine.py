@@ -278,10 +278,8 @@ class PlaybackEngine(QObject):
             start_frame = self._current_frame
             total_frames = len(self._audio_data)
             
-            # 应用音量
+            # 不在这里应用音量，而是在回调函数中实时应用
             audio_to_play = self._audio_data[start_frame:].copy()
-            if self._volume != 1.0:
-                audio_to_play = audio_to_play * self._volume
             
             # 确保是2D数组（即使是单声道）
             if len(audio_to_play.shape) == 1:
@@ -312,9 +310,9 @@ class PlaybackEngine(QObject):
                     outdata.fill(0)
                     raise sd.CallbackStop()
                 
-                # 复制音频数据
+                # 复制音频数据并实时应用音量
                 frames_to_copy = min(frames, remaining_frames)
-                outdata[:frames_to_copy] = audio_to_play[current_pos[0]:current_pos[0] + frames_to_copy]
+                outdata[:frames_to_copy] = audio_to_play[current_pos[0]:current_pos[0] + frames_to_copy] * self._volume
                 
                 if frames_to_copy < frames:
                     outdata[frames_to_copy:].fill(0)

@@ -23,8 +23,10 @@ class MusicPlayerApp:
     
     def __init__(self):
         """初始化应用"""
-        # 创建 Qt 应用
-        self.app = QApplication(sys.argv)
+        # 获取或创建 Qt 应用
+        self.app = QApplication.instance()
+        if self.app is None:
+            self.app = QApplication(sys.argv)
         self.app.setApplicationName("音乐播放器")
         
         # 初始化组件
@@ -375,10 +377,15 @@ class MusicPlayerApp:
         # 恢复播放列表和设置
         self.controller.restore_state()
         
-        # 恢复音量
+        # 恢复音量 - 先设置引擎音量，再设置滑块（避免触发信号）
         volume = self.config_manager.get("volume", 70)
-        self.main_window.volume_slider.setValue(volume)
         self.controller.set_volume(volume / 100.0)
+        self.main_window.volume_slider.blockSignals(True)
+        self.main_window.volume_slider.setValue(volume)
+        self.main_window.volume_slider.blockSignals(False)
+        self.mini_window.volume_slider.blockSignals(True)
+        self.mini_window.volume_slider.setValue(volume)
+        self.mini_window.volume_slider.blockSignals(False)
         
         # 恢复播放模式
         mode_str = self.config_manager.get("playback_mode", "sequential")
