@@ -4,6 +4,7 @@ import sys
 import os
 from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtCore import QTimer
+from PySide6.QtGui import QIcon
 
 from .models.playback_engine import PlaybackEngine
 from .models.playlist_manager import PlaylistManager
@@ -29,6 +30,9 @@ class MusicPlayerApp:
             self.app = QApplication(sys.argv)
         self.app.setApplicationName("音乐播放器")
         
+        # 设置应用图标
+        self._set_app_icon()
+        
         # 初始化组件
         self.config_manager = ConfigManager()
         self.logger = MusicPlayerLogger(self.config_manager.get_log_file())
@@ -50,6 +54,9 @@ class MusicPlayerApp:
         # 创建迷你窗口
         self.mini_window = MiniWindow()
         
+        # 为窗口设置图标
+        self._set_window_icons()
+        
         # 创建系统托盘
         self.system_tray = SystemTray(self.main_window)
         self.system_tray.show()
@@ -69,6 +76,41 @@ class MusicPlayerApp:
         self._restore_state()
         
         self.logger.info("音乐播放器启动")
+    
+    def _set_app_icon(self) -> None:
+        """设置应用图标"""
+        # 获取图标文件路径
+        icon_paths = [
+            "assets/icon_512x512.png",  # 相对于项目根目录
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icon_512x512.png"),  # 绝对路径
+        ]
+        
+        for icon_path in icon_paths:
+            if os.path.exists(icon_path):
+                icon = QIcon(icon_path)
+                if not icon.isNull():
+                    # 设置应用程序图标（影响 Dock 和程序栏）
+                    self.app.setWindowIcon(icon)
+                    print(f"✓ 已设置应用图标: {icon_path}")
+                    return
+        
+        print("⚠️ 未找到应用图标文件")
+    
+    def _set_window_icons(self) -> None:
+        """为窗口设置图标"""
+        # 获取图标文件路径
+        icon_paths = [
+            "assets/icon_512x512.png",
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icon_512x512.png"),
+        ]
+        
+        for icon_path in icon_paths:
+            if os.path.exists(icon_path):
+                icon = QIcon(icon_path)
+                if not icon.isNull():
+                    self.main_window.setWindowIcon(icon)
+                    self.mini_window.setWindowIcon(icon)
+                    return
     
     def _connect_signals(self) -> None:
         """连接信号"""
